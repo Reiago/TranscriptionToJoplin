@@ -5,6 +5,14 @@ import json
 import os
 import sys
 
+if os.name == "nt" and not sys.flags.utf8_mode:
+    # Sans le mode UTF-8, Windows decode argv avec la codepage console et
+    # corrompt les caracteres accentues (ex: --title avec des accents).
+    import subprocess
+
+    result = subprocess.run([sys.executable, "-X", "utf8", __file__] + sys.argv[1:])
+    sys.exit(result.returncode)
+
 import requests
 from dotenv import load_dotenv
 
