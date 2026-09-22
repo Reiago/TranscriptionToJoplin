@@ -52,7 +52,10 @@ resume/synthese, et creer une note dans Joplin avec ce format de corps :
    ```
    python scripts/send_to_joplin.py --title "<title>" --body-file <fichier_temp>
    ```
-   Ajouter `--notebook "<nom>"` si l'utilisateur a precise un carnet cible.
+   Par defaut la note est creee dans le carnet `YT-Transcript` (via
+   `JOPLIN_NOTEBOOK` dans `.env`), qui est cree automatiquement s'il n'existe
+   pas encore. Ajouter `--notebook "<nom>"` si l'utilisateur precise un autre
+   carnet cible.
 
 6. Confirmer a l'utilisateur que la note a ete creee (titre + carnet).
 
