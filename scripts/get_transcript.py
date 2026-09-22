@@ -1,89 +1,58 @@
 #!/usr/bin/env python3
 """Recupere le titre et la transcription (sous-titres) d'une video YouTube."""
 import argparse
-import glob
 import json
-import os
-import re
 import sys
-import tempfile
 
 import yt_dlp
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api._errors import (
+    CouldNotRetrieveTranscript,
+    NoTranscriptFound,
+    TranscriptsDisabled,
+)
 
-TIMESTAMP_RE = re.compile(r"^\d{2}:\d{2}:\d{2}\.\d{3}\s*-->")
-TAG_RE = re.compile(r"<[^>]+>")
-
-
-def vtt_to_text(path: str) -> str:
-    with open(path, encoding="utf-8") as f:
-        content = f.read()
-
-    text_lines = []
-    for raw_line in content.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        if line.startswith(("WEBVTT", "Kind:", "Language:", "NOTE")):
-            continue
-        if TIMESTAMP_RE.match(line):
-            continue
-        if line.isdigit():
-            continue
-        line = TAG_RE.sub("", line).strip()
-        if line and (not text_lines or text_lines[-1] != line):
-            text_lines.append(line)
-    return " ".join(text_lines)
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
 
-def pick_subtitle_file(vtt_files, video_id, langs):
-    for lang in langs:
-        for f in vtt_files:
-            basename = os.path.basename(f)
-            if basename.startswith(f"{video_id}.{lang}.") or basename == f"{video_id}.{lang}.vtt":
-                return f
-    return vtt_files[0]
+def get_video_info(url: str):
+    ydl_opts = {"skip_download": True, "quiet": True, "no_warnings": True}
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(url, download=False)
+    return info.get("id"), info.get("title")
 
 
 def get_transcript(url: str, langs):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        outtmpl = os.path.join(tmpdir, "%(id)s.%(ext)s")
-        ydl_opts = {
-            "skip_download": True,
-            "writesubtitles": True,
-            "writeautomaticsub": True,
-            "subtitlesformat": "vtt",
-            "subtitleslangs": langs,
-            "outtmpl": outtmpl,
-            "quiet": True,
-            "no_warnings": True,
-            "noprogress": True,
-            "logtostderr": True,
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
+    video_id, title = get_video_info(url)
+    if not video_id:
+        raise RuntimeError("Impossible de recuperer les informations de la video.")
 
-        video_id = info.get("id")
-        title = info.get("title")
+    try:
+        fetched = YouTubeTranscriptApi().fetch(video_id, languages=langs)
+    except TranscriptsDisabled as exc:
+        raise RuntimeError("Les sous-titres sont desactives pour cette video.") from exc
+    except NoTranscriptFound as exc:
+        raise RuntimeError(
+            "Aucun sous-titre disponible pour cette video (ni manuel, ni automatique)."
+        ) from exc
+    except CouldNotRetrieveTranscript as exc:
+        raise RuntimeError(f"Impossible de recuperer la transcription: {exc}") from exc
 
-        vtt_files = glob.glob(os.path.join(tmpdir, f"{video_id}*.vtt"))
-        if not vtt_files:
-            raise RuntimeError(
-                "Aucun sous-titre disponible pour cette video (ni manuel, ni automatique)."
-            )
+    transcript = " ".join(
+        snippet.text.strip() for snippet in fetched.snippets if snippet.text.strip()
+    )
 
-        chosen = pick_subtitle_file(vtt_files, video_id, langs)
-        transcript = vtt_to_text(chosen)
+    if not transcript:
+        raise RuntimeError("La transcription recuperee est vide.")
 
-        if not transcript:
-            raise RuntimeError("La transcription recuperee est vide.")
-
-        return {
-            "id": video_id,
-            "title": title,
-            "url": url,
-            "subtitle_source": os.path.basename(chosen),
-            "transcript": transcript,
-        }
+    return {
+        "id": video_id,
+        "title": title,
+        "url": url,
+        "subtitle_source": f"{fetched.language_code}{'(auto)' if fetched.is_generated else ''}",
+        "transcript": transcript,
+    }
 
 
 def main():
