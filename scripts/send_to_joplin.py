@@ -31,13 +31,26 @@ def check_connection() -> str:
     return resp.text
 
 
-def get_notebook_id(base_url: str, token: str, name: str) -> str:
-    resp = requests.get(f"{base_url}/folders", params={"token": token}, timeout=10)
+def get_or_create_notebook_id(base_url: str, token: str, name: str) -> str:
+    page = 1
+    while True:
+        resp = requests.get(
+            f"{base_url}/folders", params={"token": token, "page": page}, timeout=10
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        for folder in data.get("items", []):
+            if folder["title"].lower() == name.lower():
+                return folder["id"]
+        if not data.get("has_more"):
+            break
+        page += 1
+
+    resp = requests.post(
+        f"{base_url}/folders", params={"token": token}, json={"title": name}, timeout=10
+    )
     resp.raise_for_status()
-    for folder in resp.json().get("items", []):
-        if folder["title"].lower() == name.lower():
-            return folder["id"]
-    raise ValueError(f"Carnet Joplin introuvable: {name!r}")
+    return resp.json()["id"]
 
 
 def create_note(title: str, body: str, notebook: str | None = None) -> dict:
@@ -48,7 +61,7 @@ def create_note(title: str, body: str, notebook: str | None = None) -> dict:
 
     notebook = notebook or os.environ.get("JOPLIN_NOTEBOOK")
     if notebook:
-        payload["parent_id"] = get_notebook_id(base_url, token, notebook)
+        payload["parent_id"] = get_or_create_notebook_id(base_url, token, notebook)
 
     resp = requests.post(f"{base_url}/notes", params={"token": token}, json=payload, timeout=15)
     resp.raise_for_status()
