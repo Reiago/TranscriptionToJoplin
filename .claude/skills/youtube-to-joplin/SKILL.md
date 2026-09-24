@@ -1,66 +1,70 @@
 ---
 name: youtube-to-joplin
-description: Transcrit une video YouTube et envoie un resume/synthese formate dans Joplin. Utiliser quand l'utilisateur donne un lien YouTube et demande un resume a enregistrer dans Joplin.
+description: Transcrit une vidéo YouTube et envoie un résumé/synthèse formaté dans Joplin. Utiliser quand l'utilisateur donne un lien YouTube et demande un résumé à enregistrer dans Joplin.
 ---
 
-# YouTube -> Resume -> Joplin
+# YouTube -> Résumé -> Joplin
 
-Objectif : a partir d'un lien YouTube, recuperer la transcription, en ecrire un
-resume/synthese, et creer une note dans Joplin avec ce format de corps :
+Objectif : à partir d'un lien YouTube, récupérer la transcription, en écrire un
+résumé/synthèse, et créer une note dans Joplin avec ce format de corps :
 
 ```
-# <Titre de la video>
+# <Titre de la vidéo>
 <URL YouTube>
 
-<Contenu du resume>
+<Contenu du résumé>
 ```
 
-## Etapes
+## Étapes
 
-1. **Verifier la config Joplin**
-   - S'assurer qu'un fichier `.env` existe a la racine (sinon le creer a partir de
-     `.env.example` et demander a l'utilisateur son `JOPLIN_TOKEN`, visible dans
-     Joplin Desktop > Options > Web Clipper, apres avoir active le service).
+1. **Vérifier la config Joplin**
+   - S'assurer qu'un fichier `.env` existe à la racine (sinon le créer à partir de
+     `.env.example` et demander à l'utilisateur son `JOPLIN_TOKEN`, visible dans
+     Joplin Desktop > Options > Web Clipper, après avoir activé le service).
    - Tester la connexion : `python scripts/send_to_joplin.py --check`
-   - Si ca echoue, dire a l'utilisateur d'ouvrir Joplin Desktop et d'activer le
-     "Web Clipper Service" (Options > Web Clipper > Activer), puis reessayer.
+   - Si ça échoue, dire à l'utilisateur d'ouvrir Joplin Desktop et d'activer le
+     « Web Clipper Service » (Options > Web Clipper > Activer), puis réessayer.
 
-2. **Recuperer la transcription**
+2. **Récupérer la transcription**
    ```
    python scripts/get_transcript.py "<URL_YOUTUBE>"
    ```
    Retourne un JSON `{id, title, url, subtitle_source, transcript}` sur stdout.
-   En cas d'erreur (pas de sous-titres disponibles), le signaler a l'utilisateur
-   plutot que d'inventer un contenu.
+   En cas d'erreur (pas de sous-titres disponibles), le signaler à l'utilisateur
+   plutôt que d'inventer un contenu.
 
-3. **Rediger le resume**
-   A partir du champ `transcript`, ecrire une synthese claire et structuree en
-   francais (sauf demande contraire) : points cles, structure/logique de la
-   video, conclusions eventuelles. Ne pas paraphraser phrase par phrase ; degager
-   l'essentiel. Adapter la longueur a celle de la video.
+3. **Rédiger le résumé**
+   À partir du champ `transcript`, écrire une synthèse claire et structurée en
+   français (sauf demande contraire) : points clés, structure/logique de la
+   vidéo, conclusions éventuelles. Ne pas paraphraser phrase par phrase ; dégager
+   l'essentiel. Adapter la longueur à celle de la vidéo.
+
+   **Orthographe : écrire en français correct avec tous les accents et signes
+   diacritiques (é, è, ê, à, ç, ô, î, ù…).** Ne jamais les supprimer, même si la
+   transcription source en est dépourvue. Les scripts gèrent l'UTF-8.
 
 4. **Construire le corps de la note**
    ```
    # <title>
    <url>
 
-   <resume>
+   <résumé>
    ```
-   Ecrire ce contenu dans un fichier temporaire (scratchpad).
+   Écrire ce contenu dans un fichier temporaire (scratchpad), encodé en UTF-8.
 
-5. **Creer la note dans Joplin**
+5. **Créer la note dans Joplin**
    ```
    python scripts/send_to_joplin.py --title "<title>" --body-file <fichier_temp>
    ```
-   Par defaut la note est creee dans le carnet `YT-Transcript` (via
-   `JOPLIN_NOTEBOOK` dans `.env`), qui est cree automatiquement s'il n'existe
-   pas encore. Ajouter `--notebook "<nom>"` si l'utilisateur precise un autre
+   Par défaut la note est créée dans le carnet `YT-Transcript` (via
+   `JOPLIN_NOTEBOOK` dans `.env`), qui est créé automatiquement s'il n'existe
+   pas encore. Ajouter `--notebook "<nom>"` si l'utilisateur précise un autre
    carnet cible.
 
-6. Confirmer a l'utilisateur que la note a ete creee (titre + carnet).
+6. Confirmer à l'utilisateur que la note a été créée (titre + carnet).
 
 ## Notes
 
-- Les scripts n'appellent aucune IA : la redaction du resume (etape 3) est faite
+- Les scripts n'appellent aucune IA : la rédaction du résumé (étape 3) est faite
   par Claude directement, pas par un script externe.
-- Dependances Python : voir `requirements.txt` (`pip install -r requirements.txt`).
+- Dépendances Python : voir `requirements.txt` (`pip install -r requirements.txt`).
