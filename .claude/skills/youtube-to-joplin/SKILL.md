@@ -65,6 +65,10 @@ résumé/synthèse, et créer une note dans Joplin avec ce format de corps :
 
 ## Notes
 
+- Pour modifier une note déjà créée (ex. ajout d'une section), utiliser
+  `python scripts/send_to_joplin.py --update <note_id> --body-file <fichier>`
+  (l'id est renvoyé à la création ; `--title` et `--notebook` sont optionnels
+  et ne modifient que ce qui est fourni).
 - Les scripts n'appellent aucune IA : la rédaction du résumé (étape 3) est faite
   par Claude directement, pas par un script externe.
 - Dépendances Python : voir `requirements.txt` (`pip install -r requirements.txt`).
