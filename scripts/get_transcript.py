@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Recupere le titre et la transcription (sous-titres) d'une video YouTube."""
+"""Recupere le titre, la description et la transcription (sous-titres) d'une video YouTube."""
 import argparse
 import json
 import sys
@@ -20,11 +20,22 @@ def get_video_info(url: str):
     ydl_opts = {"skip_download": True, "quiet": True, "no_warnings": True}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
-    return info.get("id"), info.get("title")
+    chapters = [
+        {"start": int(c.get("start_time") or 0), "title": c.get("title", "")}
+        for c in info.get("chapters") or []
+    ]
+    return {
+        "id": info.get("id"),
+        "title": info.get("title"),
+        "channel": info.get("channel") or info.get("uploader"),
+        "description": info.get("description") or "",
+        "chapters": chapters,
+    }
 
 
 def get_transcript(url: str, langs):
-    video_id, title = get_video_info(url)
+    info = get_video_info(url)
+    video_id = info["id"]
     if not video_id:
         raise RuntimeError("Impossible de recuperer les informations de la video.")
 
@@ -48,8 +59,11 @@ def get_transcript(url: str, langs):
 
     return {
         "id": video_id,
-        "title": title,
+        "title": info["title"],
         "url": url,
+        "channel": info["channel"],
+        "description": info["description"],
+        "chapters": info["chapters"],
         "subtitle_source": f"{fetched.language_code}{'(auto)' if fetched.is_generated else ''}",
         "transcript": transcript,
     }
@@ -57,7 +71,7 @@ def get_transcript(url: str, langs):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Recupere le titre et la transcription d'une video YouTube (JSON sur stdout)."
+        description="Recupere le titre, la description et la transcription d'une video YouTube (JSON sur stdout)."
     )
     parser.add_argument("url", help="URL de la video YouTube")
     parser.add_argument(

@@ -29,7 +29,10 @@ résumé/synthèse, et créer une note dans Joplin avec ce format de corps :
    ```
    python scripts/get_transcript.py "<URL_YOUTUBE>"
    ```
-   Retourne un JSON `{id, title, url, subtitle_source, transcript}` sur stdout.
+   Retourne un JSON `{id, title, url, channel, description, chapters,
+   subtitle_source, transcript}` sur stdout (`chapters` : liste
+   `{start, title}`, éventuellement vide). La sortie peut être longue : la
+   rediriger vers un fichier du scratchpad puis le lire.
    En cas d'erreur (pas de sous-titres disponibles), le signaler à l'utilisateur
    plutôt que d'inventer un contenu.
 
@@ -38,6 +41,25 @@ résumé/synthèse, et créer une note dans Joplin avec ce format de corps :
    français (sauf demande contraire) : points clés, structure/logique de la
    vidéo, conclusions éventuelles. Ne pas paraphraser phrase par phrase ; dégager
    l'essentiel. Adapter la longueur à celle de la vidéo.
+
+   **Exploiter la description** (champ `description`) :
+   - **Noms propres** : les sous-titres automatiques déforment souvent les noms
+     d'outils, de modèles ou de personnes. Utiliser l'orthographe de la
+     description (et des `chapters`) en priorité sur celle de la transcription.
+   - **Liens** : intégrer les liens pertinents de la description directement
+     dans le résumé, sous forme de liens Markdown sur le nom concerné
+     (ex. `**[Ideogram 4.5](https://ideogram.ai/models/4.5/)**`). Si un lien ne
+     correspond à aucune partie du résumé mais reste utile (source, article,
+     dépôt de code…), l'ajouter dans une section finale `## Liens`.
+   - **Informations utiles** : reprendre ce qui complète le contenu (sources,
+     références, précisions, errata, ressources citées).
+   - **À exclure** : sponsors et codes promo, liens d'affiliation (amzn.to,
+     matériel de l'auteur…), auto-promotion (réseaux sociaux, newsletter, Patreon,
+     Ko-fi, adhésion à la chaîne, autres vidéos de la chaîne, formations ou
+     produits de l'auteur), hashtags. Ne pas mentionner non plus les sponsors
+     présents dans la transcription.
+   - Ne jamais inventer ni compléter une URL : n'utiliser que les liens tels
+     qu'ils figurent dans la description.
 
    **Orthographe : écrire en français correct avec tous les accents et signes
    diacritiques (é, è, ê, à, ç, ô, î, ù…).** Ne jamais les supprimer, même si la

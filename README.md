@@ -30,7 +30,7 @@ resume a envoyer dans Joplin : le skill `youtube-to-joplin` s'occupe du reste.
 En manuel :
 
 ```bash
-# 1. Recuperer titre + transcription
+# 1. Recuperer titre, description (liens) + transcription
 python scripts/get_transcript.py "https://www.youtube.com/watch?v=XXXXXXXXXXX"
 
 # 2. Verifier la connexion Joplin
