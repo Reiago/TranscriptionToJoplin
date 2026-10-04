@@ -11,6 +11,7 @@ résumé/synthèse, et créer une note dans Joplin avec ce format de corps :
 ```
 # <Titre de la vidéo>
 <URL YouTube>
+Publiée le <date de publication>
 
 <Contenu du résumé>
 ```
@@ -29,8 +30,9 @@ résumé/synthèse, et créer une note dans Joplin avec ce format de corps :
    ```
    python scripts/get_transcript.py "<URL_YOUTUBE>"
    ```
-   Retourne un JSON `{id, title, url, channel, description, chapters,
-   subtitle_source, transcript}` sur stdout (`chapters` : liste
+   Retourne un JSON `{id, title, url, channel, upload_date, description,
+   chapters, subtitle_source, transcript}` sur stdout (`upload_date` : date de
+   publication au format `AAAA-MM-JJ`, éventuellement vide ; `chapters` : liste
    `{start, title}`, éventuellement vide). La sortie peut être longue : la
    rediriger vers un fichier du scratchpad puis le lire.
    En cas d'erreur (pas de sous-titres disponibles), le signaler à l'utilisateur
@@ -69,9 +71,12 @@ résumé/synthèse, et créer une note dans Joplin avec ce format de corps :
    ```
    # <title>
    <url>
+   Publiée le <upload_date>
 
    <résumé>
    ```
+   Écrire la date en toutes lettres en français (ex. `Publiée le 12 mars 2026`).
+   Si `upload_date` est vide, omettre cette ligne.
    Écrire ce contenu dans un fichier temporaire (scratchpad), encodé en UTF-8.
 
 5. **Créer la note dans Joplin**

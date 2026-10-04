@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Recupere le titre, la description et la transcription (sous-titres) d'une video YouTube."""
+"""Recupere le titre, la date de publication, la description et la transcription (sous-titres) d'une video YouTube."""
 import argparse
 import json
 import sys
@@ -24,10 +24,14 @@ def get_video_info(url: str):
         {"start": int(c.get("start_time") or 0), "title": c.get("title", "")}
         for c in info.get("chapters") or []
     ]
+    upload_date = info.get("upload_date") or ""  # format YYYYMMDD
+    if len(upload_date) == 8:
+        upload_date = f"{upload_date[:4]}-{upload_date[4:6]}-{upload_date[6:]}"
     return {
         "id": info.get("id"),
         "title": info.get("title"),
         "channel": info.get("channel") or info.get("uploader"),
+        "upload_date": upload_date,
         "description": info.get("description") or "",
         "chapters": chapters,
     }
@@ -62,6 +66,7 @@ def get_transcript(url: str, langs):
         "title": info["title"],
         "url": url,
         "channel": info["channel"],
+        "upload_date": info["upload_date"],
         "description": info["description"],
         "chapters": info["chapters"],
         "subtitle_source": f"{fetched.language_code}{'(auto)' if fetched.is_generated else ''}",
