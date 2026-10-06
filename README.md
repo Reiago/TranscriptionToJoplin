@@ -40,6 +40,30 @@ python scripts/send_to_joplin.py --check
 python scripts/send_to_joplin.py --title "Mon titre" --body-file note.md
 ```
 
+## Nettoyer une note importee depuis un mail
+
+Les mails HTML exportes depuis Thunderbird (extension "Joplin Export", format
+HTML) arrivent dans Joplin sous forme de tableaux HTML de mise en page, presque
+illisibles. `clean_email_note.py` les convertit en markdown : texte, titres,
+listes et images conserves, liens de tracking remplaces par leur vraie
+destination, pixels espions, icones et pied de desabonnement supprimes.
+
+```bash
+# Apercu du resultat, sans modifier la note
+python scripts/clean_email_note.py --search 'title:"Ollama now supports*"' --dry-run
+
+# Nettoyage (le corps d'origine est sauvegarde dans backups/)
+python scripts/clean_email_note.py --id <NOTE_ID>
+```
+
+Options : `--all` pour traiter toutes les notes trouvees par `--search`,
+`--keep-footer` pour garder le paragraphe de desabonnement, `--file` pour
+convertir un fichier local sans passer par Joplin.
+
+Pour eviter le probleme a la source : dans Thunderbird, options de l'extension
+Joplin Export > Format : **Plaintext** (texte brut, sans images ; l'extension
+repasse en HTML si le mail n'a pas de version texte).
+
 ## Format de note genere
 
 ```
