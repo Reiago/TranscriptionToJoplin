@@ -48,6 +48,9 @@ illisibles. `clean_email_note.py` les convertit en markdown : texte, titres,
 listes et images conserves, liens de tracking remplaces par leur vraie
 destination, pixels espions, icones et pied de desabonnement supprimes.
 
+Dans Claude Code, il suffit de demander de nettoyer la note : le skill
+`clean-email-note` s'en charge (apercu, application, sauvegarde).
+
 ```bash
 # Apercu du resultat, sans modifier la note
 python scripts/clean_email_note.py --search 'title:"Ollama now supports*"' --dry-run
