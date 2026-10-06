@@ -20,8 +20,11 @@ pixels espions, icônes, avatars et pied de désabonnement supprimés.
 2. **Identifier la note**
    - Les notes importées par l'extension ont un titre de la forme
      `<Objet du mail> from <Expéditeur> <adresse>`.
-   - Chercher avec une requête ciblée sur le titre, par exemple
-     `--search 'title:"Comfy Agent: The First*"'`.
+   - Chercher avec une requête ciblée sur le titre : quelques mots consécutifs
+     du titre, **sans ponctuation** (un `:` dans la phrase fait échouer la
+     recherche Joplin, avec ou sans `*`), par exemple
+     `--search 'title:"build your own mods"'` pour
+     « This week in Claude Code: build your own mods… ».
    - Si plusieurs notes correspondent, le script refuse et liste les candidates
      (sur stderr) : choisir la bonne et relancer avec `--id <NOTE_ID>`, ou
      demander à l'utilisateur en cas de doute.

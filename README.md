@@ -53,7 +53,7 @@ Dans Claude Code, il suffit de demander de nettoyer la note : le skill
 
 ```bash
 # Apercu du resultat, sans modifier la note
-python scripts/clean_email_note.py --search 'title:"Ollama now supports*"' --dry-run
+python scripts/clean_email_note.py --search 'title:"Ollama now supports"' --dry-run
 
 # Nettoyage (le corps d'origine est sauvegarde dans backups/)
 python scripts/clean_email_note.py --id <NOTE_ID>
