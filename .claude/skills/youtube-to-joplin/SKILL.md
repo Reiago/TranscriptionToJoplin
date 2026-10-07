@@ -35,8 +35,13 @@ Publiée le <date de publication>
    publication au format `AAAA-MM-JJ`, éventuellement vide ; `chapters` : liste
    `{start, title}`, éventuellement vide). La sortie peut être longue : la
    rediriger vers un fichier du scratchpad puis le lire.
-   En cas d'erreur (pas de sous-titres disponibles), le signaler à l'utilisateur
-   plutôt que d'inventer un contenu.
+   Si la vidéo n'a pas de sous-titres, le script télécharge l'audio et le
+   transcrit localement avec **faster-whisper** (GPU si disponible, sinon CPU) ;
+   `subtitle_source` vaut alors `<langue>(whisper:<modèle>)`. Cela peut prendre
+   plusieurs minutes : lancer la commande en arrière-plan pour une vidéo longue.
+   Options : `--whisper-model <nom>` (défaut `large-v3-turbo`), `--no-whisper`.
+   Les directs en cours ou à venir ne peuvent pas être transcrits.
+   En cas d'erreur, la signaler à l'utilisateur plutôt que d'inventer un contenu.
 
 3. **Rédiger le résumé**
    À partir du champ `transcript`, écrire une synthèse claire et structurée en
