@@ -40,7 +40,10 @@ Publiée le <date de publication>
    `subtitle_source` vaut alors `<langue>(whisper:<modèle>)`. Cela peut prendre
    plusieurs minutes : lancer la commande en arrière-plan pour une vidéo longue.
    Options : `--whisper-model <nom>` (défaut `large-v3-turbo`), `--no-whisper`.
-   Les directs en cours ou à venir ne peuvent pas être transcrits.
+   **Directs** : sans sous-titres, un direct en cours, programmé ou tout juste
+   terminé (`post_live`) ne peut pas être transcrit. Le script renvoie alors une
+   erreur avec un champ `live_status` : dire à l'utilisateur de patienter
+   jusqu'à la fin de la diffusion puis de relancer le skill, sans créer de note.
    En cas d'erreur, la signaler à l'utilisateur plutôt que d'inventer un contenu.
 
 3. **Rédiger le résumé**

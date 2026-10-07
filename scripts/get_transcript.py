@@ -44,6 +44,25 @@ def get_video_info(url: str):
     }
 
 
+LIVE_WAIT_MESSAGES = {
+    "is_live": "La video est un direct en cours",
+    "is_upcoming": "La video est un direct programme qui n'a pas encore commence",
+    "post_live": "Le direct vient de se terminer et YouTube traite encore la rediffusion",
+}
+
+
+class LiveStreamPending(RuntimeError):
+    """Direct sans sous-titres : il faut attendre la fin de la diffusion."""
+
+    def __init__(self, live_status: str, reason: str):
+        super().__init__(
+            f"{reason}. {LIVE_WAIT_MESSAGES[live_status]} : "
+            "patientez jusqu'a la fin de la diffusion (et la mise en ligne de la "
+            "rediffusion), puis relancez la commande."
+        )
+        self.live_status = live_status
+
+
 def fetch_subtitles(video_id: str, langs):
     """Retourne (texte, source) depuis les sous-titres YouTube."""
     try:
@@ -124,11 +143,8 @@ def get_transcript(url: str, langs, whisper_model: str | None):
     except RuntimeError as exc:
         if not whisper_model:
             raise
-        if info["live_status"] in ("is_live", "is_upcoming"):
-            raise RuntimeError(
-                f"{exc} La video est un direct en cours ou a venir : "
-                "transcription audio impossible avant la fin de la diffusion."
-            ) from exc
+        if info["live_status"] in LIVE_WAIT_MESSAGES:
+            raise LiveStreamPending(info["live_status"], str(exc).rstrip(".")) from exc
         print(f"{exc} Repli sur la transcription audio.", file=sys.stderr)
         transcript, source = transcribe_audio(url, whisper_model)
 
@@ -174,7 +190,10 @@ def main():
     try:
         result = get_transcript(args.url, langs, None if args.no_whisper else args.whisper_model)
     except Exception as exc:  # noqa: BLE001 - on veut renvoyer toute erreur a l'appelant
-        print(json.dumps({"error": str(exc)}), file=sys.stderr)
+        error = {"error": str(exc)}
+        if isinstance(exc, LiveStreamPending):
+            error["live_status"] = exc.live_status
+        print(json.dumps(error, ensure_ascii=False), file=sys.stderr)
         sys.exit(1)
 
     print(json.dumps(result, ensure_ascii=False))
