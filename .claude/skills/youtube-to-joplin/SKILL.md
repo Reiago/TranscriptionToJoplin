@@ -1,6 +1,6 @@
 ---
 name: youtube-to-joplin
-description: Transcrit une vidéo YouTube et envoie un résumé/synthèse formaté dans Joplin. Utiliser quand l'utilisateur donne un lien YouTube et demande un résumé à enregistrer dans Joplin.
+description: Transcrit une ou plusieurs vidéos YouTube et envoie un résumé/synthèse formaté dans Joplin (une note par vidéo, rapport final en mode liste). Utiliser quand l'utilisateur donne un lien YouTube ou une liste de liens et demande un résumé à enregistrer dans Joplin.
 ---
 
 # YouTube -> Résumé -> Joplin
@@ -25,6 +25,12 @@ Publiée le <date de publication>
    - Tester la connexion : `python scripts/send_to_joplin.py --check`
    - Si ça échoue, dire à l'utilisateur d'ouvrir Joplin Desktop et d'activer le
      « Web Clipper Service » (Options > Web Clipper > Activer), puis réessayer.
+   - Vérifier que la vidéo n'a pas déjà une note, en cherchant son id YouTube
+     (le paramètre `v=` de l'URL, ou la fin d'une URL `youtu.be/<id>`) :
+     `python scripts/send_to_joplin.py --find <id_video>`
+     Si `matches` n'est pas vide, ne pas recréer la note : le signaler et
+     demander à l'utilisateur s'il veut la remplacer (`--update`) ou en créer
+     une seconde.
 
 2. **Récupérer la transcription**
    ```
@@ -98,12 +104,50 @@ Publiée le <date de publication>
 
 6. Confirmer à l'utilisateur que la note a été créée (titre + carnet).
 
+## Mode liste (plusieurs vidéos)
+
+Si l'utilisateur fournit plusieurs liens (séparés par des espaces, des virgules
+ou des retours à la ligne, ou dans un fichier texte qu'il désigne) :
+
+1. **Préparer la liste** : extraire toutes les URL YouTube, en retirer les
+   doublons (même id de vidéo) et annoncer le nombre de vidéos à traiter.
+   Vérifier la connexion Joplin (`--check`) une seule fois au départ ; si elle
+   échoue, s'arrêter avant de traiter quoi que ce soit.
+2. **Traiter les vidéos une par une, dans l'ordre**, sans parallélisme ni
+   sous-agents : pour chaque vidéo, dérouler les étapes 2 à 5 en entier (y
+   compris la vérification de doublon), puis passer à la suivante. Utiliser un
+   fichier de transcription et un fichier de note distincts par vidéo dans le
+   scratchpad (ex. `transcript_<id>.json`, `note_<id>.md`).
+3. **Ne jamais interrompre la série pour une vidéo en échec** : noter le
+   problème et passer à la suivante. Ne pas poser de question en cours de
+   route ; les décisions sont reportées au rapport final. En particulier :
+   - **doublon** (`--find` renvoie une note) : ne rien créer, noter le titre
+     et l'id de la note existante ;
+   - **direct** (erreur avec `live_status`) : ne rien créer, noter qu'il faudra
+     relancer après la diffusion ;
+   - **autre erreur** (vidéo privée/supprimée, transcription impossible,
+     échec Joplin…) : noter le message d'erreur, sans inventer de contenu.
+   Noter aussi les points d'attention sur les notes créées : transcription
+   Whisper (plus lente, possiblement moins fiable), noms propres incertains
+   faute de description, contenu partiel, etc.
+4. Donner un court point d'avancement après chaque vidéo
+   (ex. `3/8 — « Titre » : note créée`).
+5. **Rapport final**, une fois toutes les vidéos traitées :
+   - bilan chiffré : notes créées / ignorées (doublons) / en échec ;
+   - liste des notes créées (titre + carnet) ;
+   - **problèmes rencontrés** : pour chaque vidéo non traitée ou à vérifier,
+     l'URL, la nature du problème et l'action suggérée (relancer plus tard,
+     remplacer la note existante, vérifier l'URL…) ;
+   - proposer de relancer le skill uniquement sur les vidéos à reprendre.
+
 ## Notes
 
 - Pour modifier une note déjà créée (ex. ajout d'une section), utiliser
   `python scripts/send_to_joplin.py --update <note_id> --body-file <fichier>`
   (l'id est renvoyé à la création ; `--title` et `--notebook` sont optionnels
   et ne modifient que ce qui est fourni).
+- `python scripts/send_to_joplin.py --find <texte>` liste les notes (id +
+  titre) dont le titre ou le corps contient ce texte.
 - Les scripts n'appellent aucune IA : la rédaction du résumé (étape 3) est faite
   par Claude directement, pas par un script externe.
 - Dépendances Python : voir `requirements.txt` (`pip install -r requirements.txt`).

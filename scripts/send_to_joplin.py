@@ -76,6 +76,32 @@ def create_note(title: str, body: str, notebook: str | None = None) -> dict:
     return resp.json()
 
 
+def find_notes(text: str) -> list[dict]:
+    """Retourne les notes dont le titre ou le corps contient `text` (ex. un id de video)."""
+    token = get_token()
+    base_url = get_base_url()
+
+    matches = []
+    page = 1
+    while True:
+        resp = requests.get(
+            f"{base_url}/search",
+            params={"token": token, "query": f'"{text}"', "fields": "id,title,body", "page": page},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        # La recherche plein texte est approximative : on confirme par une sous-chaine exacte.
+        matches += [
+            {"id": n["id"], "title": n["title"]}
+            for n in data.get("items", [])
+            if text in n.get("body", "") or text in n.get("title", "")
+        ]
+        if not data.get("has_more"):
+            return matches
+        page += 1
+
+
 def update_note(
     note_id: str, title: str | None = None, body: str | None = None, notebook: str | None = None
 ) -> dict:
@@ -112,7 +138,21 @@ def main():
         help="Met a jour la note existante NOTE_ID au lieu d'en creer une "
         "(seuls les champs fournis sont modifies ; --notebook deplace la note)",
     )
+    parser.add_argument(
+        "--find",
+        metavar="TEXTE",
+        help="Liste les notes contenant TEXTE (ex. l'id d'une video YouTube) pour detecter un doublon",
+    )
     args = parser.parse_args()
+
+    if args.find:
+        try:
+            notes = find_notes(args.find)
+        except Exception as exc:  # noqa: BLE001
+            print(json.dumps({"error": str(exc)}), file=sys.stderr)
+            sys.exit(1)
+        print(json.dumps({"matches": notes}, ensure_ascii=False))
+        return
 
     if args.check:
         try:

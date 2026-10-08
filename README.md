@@ -26,6 +26,9 @@ disponible.
 
 Dans une session Claude Code, donner simplement un lien YouTube et demander un
 resume a envoyer dans Joplin : le skill `youtube-to-joplin` s'occupe du reste.
+On peut aussi donner une liste de liens : les videos sont traitees une par une
+(une note chacune, les doublons deja presents dans Joplin sont ignores) et un
+rapport final liste les problemes rencontres.
 
 En manuel :
 
