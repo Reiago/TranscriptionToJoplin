@@ -123,6 +123,35 @@ def update_note(
     return resp.json()
 
 
+VALUE_OPTIONS = ("--title", "--body-file", "--body", "--notebook", "--update", "--find")
+FLAG_OPTIONS = ("--check", "-h", "--help")
+
+
+def attach_dash_values(argv: list[str]) -> list[str]:
+    """Colle a son option une valeur commencant par '-' (ex. id YouTube '-ETLneTCnk8').
+
+    Sans cela, argparse prend la valeur pour une option et echoue
+    ("expected one argument").
+    """
+    out = []
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        nxt = argv[i + 1] if i + 1 < len(argv) else None
+        if (
+            arg in VALUE_OPTIONS
+            and nxt is not None
+            and nxt.startswith("-")
+            and nxt.split("=", 1)[0] not in VALUE_OPTIONS + FLAG_OPTIONS
+        ):
+            out.append(f"{arg}={nxt}")
+            i += 2
+        else:
+            out.append(arg)
+            i += 1
+    return out
+
+
 def main():
     load_dotenv()
 
@@ -143,7 +172,7 @@ def main():
         metavar="TEXTE",
         help="Liste les notes contenant TEXTE (ex. l'id d'une video YouTube) pour detecter un doublon",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(attach_dash_values(sys.argv[1:]))
 
     if args.find:
         try:
