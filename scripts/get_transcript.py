@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Recupere le titre, la date de publication, la description et la transcription d'une video YouTube.
 
-Utilise les sous-titres YouTube ; a defaut, transcrit l'audio avec faster-whisper.
+Utilise les sous-titres YouTube (via yt-dlp si youtube-transcript-api est bloque) ;
+a defaut, transcrit l'audio avec faster-whisper.
 """
 import argparse
 import json
@@ -15,6 +16,7 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import (
     CouldNotRetrieveTranscript,
     NoTranscriptFound,
+    RequestBlocked,
     TranscriptsDisabled,
 )
 
@@ -41,6 +43,8 @@ def get_video_info(url: str):
         "description": info.get("description") or "",
         "chapters": chapters,
         "live_status": info.get("live_status") or "",
+        "subtitles": info.get("subtitles") or {},
+        "automatic_captions": info.get("automatic_captions") or {},
     }
 
 
@@ -63,10 +67,55 @@ class LiveStreamPending(RuntimeError):
         self.live_status = live_status
 
 
-def fetch_subtitles(video_id: str, langs):
+def pick_ytdlp_track(tracks: dict, langs):
+    """Choisit (langue, url json3) dans un dict de pistes yt-dlp, sans les traductions automatiques."""
+    for lang in langs:
+        for key in (lang, f"{lang}-orig"):
+            for fmt in tracks.get(key, []):
+                # les pistes traduites par YouTube portent un parametre tlang=
+                if fmt.get("ext") == "json3" and "tlang=" not in fmt.get("url", ""):
+                    return lang, fmt["url"]
+    return None
+
+
+def fetch_subtitles_ytdlp(url: str, info: dict, langs):
+    """Repli quand youtube-transcript-api est bloque : sous-titres via yt-dlp. Retourne (texte, source)."""
+    picked = pick_ytdlp_track(info["subtitles"], langs)
+    generated = False
+    if not picked:
+        picked = pick_ytdlp_track(info["automatic_captions"], langs)
+        generated = True
+    if not picked:
+        raise RuntimeError("Aucun sous-titre disponible via yt-dlp pour cette video.")
+
+    lang, track_url = picked
+    with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True}) as ydl:
+        data = json.loads(ydl.urlopen(track_url).read().decode("utf-8"))
+    pieces = (
+        seg.get("utf8", "")
+        for event in data.get("events", [])
+        for seg in event.get("segs") or []
+    )
+    transcript = " ".join(" ".join(pieces).split())
+    return transcript, f"{lang}{'(auto)' if generated else ''}(yt-dlp)"
+
+
+def fetch_subtitles(url: str, info: dict, langs):
     """Retourne (texte, source) depuis les sous-titres YouTube."""
     try:
-        fetched = YouTubeTranscriptApi().fetch(video_id, languages=langs)
+        fetched = YouTubeTranscriptApi().fetch(info["id"], languages=langs)
+    except RequestBlocked as exc:
+        print(
+            "youtube-transcript-api est bloque par YouTube, repli sur les sous-titres via yt-dlp.",
+            file=sys.stderr,
+        )
+        try:
+            return fetch_subtitles_ytdlp(url, info, langs)
+        except Exception as ytdlp_exc:  # noqa: BLE001 - on remonte les deux causes
+            raise RuntimeError(
+                f"Impossible de recuperer la transcription (IP bloquee par YouTube, "
+                f"repli yt-dlp en echec : {ytdlp_exc})"
+            ) from exc
     except TranscriptsDisabled as exc:
         raise RuntimeError("Les sous-titres sont desactives pour cette video.") from exc
     except NoTranscriptFound as exc:
@@ -139,7 +188,7 @@ def get_transcript(url: str, langs, whisper_model: str | None):
         raise RuntimeError("Impossible de recuperer les informations de la video.")
 
     try:
-        transcript, source = fetch_subtitles(video_id, langs)
+        transcript, source = fetch_subtitles(url, info, langs)
     except RuntimeError as exc:
         if not whisper_model:
             raise
