@@ -45,7 +45,15 @@ Publiée le <date de publication>
    transcrit localement avec **faster-whisper** (GPU si disponible, sinon CPU) ;
    `subtitle_source` vaut alors `<langue>(whisper:<modèle>)`. Cela peut prendre
    plusieurs minutes : lancer la commande en arrière-plan pour une vidéo longue.
-   Options : `--whisper-model <nom>` (défaut `large-v3-turbo`), `--no-whisper`.
+   Si YouTube bloque la récupération des sous-titres (trop de requêtes), le
+   script tente d'abord de les télécharger via yt-dlp ; `subtitle_source` se
+   termine alors par `(yt-dlp)`.
+   **Espacement** : le script attend automatiquement au moins 61 s depuis son
+   précédent appel avant d'interroger YouTube, pour éviter les blocages. Ne pas
+   chercher à contourner ce délai : l'outil n'a pas vocation à traiter des vidéos
+   en masse ni rapidement.
+   Options : `--whisper-model <nom>` (défaut `large-v3-turbo`), `--no-whisper`,
+   `--min-interval <secondes>` (défaut 61).
    **Directs** : sans sous-titres, un direct en cours, programmé ou tout juste
    terminé (`post_live`) ne peut pas être transcrit. Le script renvoie alors une
    erreur avec un champ `live_status` : dire à l'utilisateur de patienter
@@ -117,7 +125,9 @@ ou des retours à la ligne, ou dans un fichier texte qu'il désigne) :
    sous-agents : pour chaque vidéo, dérouler les étapes 2 à 5 en entier (y
    compris la vérification de doublon), puis passer à la suivante. Utiliser un
    fichier de transcription et un fichier de note distincts par vidéo dans le
-   scratchpad (ex. `transcript_<id>.json`, `note_<id>.md`).
+   scratchpad (ex. `transcript_<id>.json`, `note_<id>.md`). Le script de
+   transcription espace lui-même les vidéos d'au moins 61 s : prévoir environ
+   une minute par vidéo et ne pas lancer plusieurs transcriptions en parallèle.
 3. **Ne jamais interrompre la série pour une vidéo en échec** : noter le
    problème et passer à la suivante. Ne pas poser de question en cours de
    route ; les décisions sont reportées au rapport final. En particulier :

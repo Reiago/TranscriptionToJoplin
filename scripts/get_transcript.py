@@ -9,6 +9,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 import yt_dlp
@@ -181,6 +182,28 @@ def transcribe_audio(url: str, model_name: str):
     return transcript, f"{language}(whisper:{model_name})"
 
 
+LAST_REQUEST_FILE = Path(tempfile.gettempdir()) / "transcription_to_joplin_last_request"
+
+
+def wait_min_interval(min_interval: float):
+    """Espace les appels a YouTube d'au moins `min_interval` secondes, d'une execution a l'autre.
+
+    L'heure du dernier appel est conservee dans un fichier temporaire, pour que
+    l'espacement s'applique quelle que soit la facon dont les videos sont enchainees.
+    """
+    if min_interval <= 0:
+        return
+    try:
+        elapsed = time.time() - float(LAST_REQUEST_FILE.read_text())
+    except (OSError, ValueError):
+        elapsed = min_interval
+    if 0 <= elapsed < min_interval:
+        delay = min_interval - elapsed
+        print(f"Pause de {delay:.0f} s pour espacer les requetes a YouTube...", file=sys.stderr)
+        time.sleep(delay)
+    LAST_REQUEST_FILE.write_text(str(time.time()))
+
+
 def get_transcript(url: str, langs, whisper_model: str | None):
     info = get_video_info(url)
     video_id = info["id"]
@@ -233,9 +256,17 @@ def main():
         action="store_true",
         help="Ne pas transcrire l'audio quand les sous-titres sont absents",
     )
+    parser.add_argument(
+        "--min-interval",
+        type=float,
+        default=61,
+        help="Delai minimal en secondes entre deux executions, pour ne pas etre bloque "
+        "par YouTube (defaut: 61, 0 pour desactiver)",
+    )
     args = parser.parse_args()
     langs = [lang.strip() for lang in args.langs.split(",") if lang.strip()]
 
+    wait_min_interval(args.min_interval)
     try:
         result = get_transcript(args.url, langs, None if args.no_whisper else args.whisper_model)
     except Exception as exc:  # noqa: BLE001 - on veut renvoyer toute erreur a l'appelant
