@@ -128,6 +128,24 @@ ou des retours à la ligne, ou dans un fichier texte qu'il désigne) :
    scratchpad (ex. `transcript_<id>.json`, `note_<id>.md`). Le script de
    transcription espace lui-même les vidéos d'au moins 61 s : prévoir environ
    une minute par vidéo et ne pas lancer plusieurs transcriptions en parallèle.
+
+   **Règle : ne jamais pré-télécharger les transcriptions.** Interdit de lancer
+   une boucle (au premier plan ou en arrière-plan) qui récupère toutes les
+   transcriptions d'avance pour rédiger les résumés ensuite. Pour chaque vidéo,
+   on récupère sa transcription, on rédige son résumé, on crée sa note, et
+   seulement ensuite on appelle `get_transcript.py` pour la vidéo suivante.
+
+   > **Pourquoi :** le 14 octobre 2026, 18 transcriptions ont été récupérées
+   > d'avance dans une boucle, en environ 3 minutes. Cette rafale de requêtes
+   > anonymes a fait bloquer l'adresse IP par YouTube (sous-titres refusés,
+   > puis HTTP 429), alors que des journées avec plus de vidéos traitées
+   > au fil de l'eau étaient passées sans souci : c'est le rythme qui déclenche
+   > le blocage, pas le volume. Traiter les vidéos une par une étale les
+   > requêtes sur toute la durée du travail ; le temps de rédaction d'un
+   > résumé (souvent 1 à 3 min) absorbe la pause de 61 s, donc ce n'est pas plus
+   > lent au total. Enfin, si YouTube bloque en cours de route, les notes déjà
+   > créées restent acquises et le rapport final indique où la série s'est
+   > arrêtée.
 3. **Ne jamais interrompre la série pour une vidéo en échec** : noter le
    problème et passer à la suivante. Ne pas poser de question en cours de
    route ; les décisions sont reportées au rapport final. En particulier :
