@@ -45,7 +45,15 @@ Publiée le <date de publication>
    transcrit localement avec **faster-whisper** (GPU si disponible, sinon CPU) ;
    `subtitle_source` vaut alors `<langue>(whisper:<modèle>)`. Cela peut prendre
    plusieurs minutes : lancer la commande en arrière-plan pour une vidéo longue.
-   Options : `--whisper-model <nom>` (défaut `large-v3-turbo`), `--no-whisper`.
+   Si YouTube bloque la récupération des sous-titres (trop de requêtes), le
+   script tente d'abord de les télécharger via yt-dlp ; `subtitle_source` se
+   termine alors par `(yt-dlp)`.
+   **Espacement** : le script attend automatiquement au moins 61 s depuis son
+   précédent appel avant d'interroger YouTube, pour éviter les blocages. Ne pas
+   chercher à contourner ce délai : l'outil n'a pas vocation à traiter des vidéos
+   en masse ni rapidement.
+   Options : `--whisper-model <nom>` (défaut `large-v3-turbo`), `--no-whisper`,
+   `--min-interval <secondes>` (défaut 61).
    **Directs** : sans sous-titres, un direct en cours, programmé ou tout juste
    terminé (`post_live`) ne peut pas être transcrit. Le script renvoie alors une
    erreur avec un champ `live_status` : dire à l'utilisateur de patienter
@@ -117,7 +125,27 @@ ou des retours à la ligne, ou dans un fichier texte qu'il désigne) :
    sous-agents : pour chaque vidéo, dérouler les étapes 2 à 5 en entier (y
    compris la vérification de doublon), puis passer à la suivante. Utiliser un
    fichier de transcription et un fichier de note distincts par vidéo dans le
-   scratchpad (ex. `transcript_<id>.json`, `note_<id>.md`).
+   scratchpad (ex. `transcript_<id>.json`, `note_<id>.md`). Le script de
+   transcription espace lui-même les vidéos d'au moins 61 s : prévoir environ
+   une minute par vidéo et ne pas lancer plusieurs transcriptions en parallèle.
+
+   **Règle : ne jamais pré-télécharger les transcriptions.** Interdit de lancer
+   une boucle (au premier plan ou en arrière-plan) qui récupère toutes les
+   transcriptions d'avance pour rédiger les résumés ensuite. Pour chaque vidéo,
+   on récupère sa transcription, on rédige son résumé, on crée sa note, et
+   seulement ensuite on appelle `get_transcript.py` pour la vidéo suivante.
+
+   > **Pourquoi :** le 14 octobre 2026, 18 transcriptions ont été récupérées
+   > d'avance dans une boucle, en environ 3 minutes. Cette rafale de requêtes
+   > anonymes a fait bloquer l'adresse IP par YouTube (sous-titres refusés,
+   > puis HTTP 429), alors que des journées avec plus de vidéos traitées
+   > au fil de l'eau étaient passées sans souci : c'est le rythme qui déclenche
+   > le blocage, pas le volume. Traiter les vidéos une par une étale les
+   > requêtes sur toute la durée du travail ; le temps de rédaction d'un
+   > résumé (souvent 1 à 3 min) absorbe la pause de 61 s, donc ce n'est pas plus
+   > lent au total. Enfin, si YouTube bloque en cours de route, les notes déjà
+   > créées restent acquises et le rapport final indique où la série s'est
+   > arrêtée.
 3. **Ne jamais interrompre la série pour une vidéo en échec** : noter le
    problème et passer à la suivante. Ne pas poser de question en cours de
    route ; les décisions sont reportées au rapport final. En particulier :
