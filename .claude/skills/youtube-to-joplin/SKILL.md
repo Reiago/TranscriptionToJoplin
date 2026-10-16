@@ -89,6 +89,12 @@ Publiée le <date de publication>
    diacritiques (é, è, ê, à, ç, ô, î, ù…).** Ne jamais les supprimer, même si la
    transcription source en est dépourvue. Les scripts gèrent l'UTF-8.
 
+   **Symbole dollar : toujours l'échapper en `\$`** (ex. `85 M\$`, `0,08 \$`).
+   Joplin interprète le texte compris entre deux `$` comme une formule
+   mathématique (KaTeX) : deux montants dans un même paragraphe produisent un
+   passage illisible. Ne pas échapper les `$` à l'intérieur des blocs de code
+   ou du code en ligne, où ils s'affichent tels quels.
+
 4. **Construire le corps de la note**
    ```
    # <title>
