@@ -11,6 +11,7 @@ résumé/synthèse, et créer une note dans Joplin avec ce format de corps :
 ```
 # <Titre de la vidéo>
 <URL YouTube>
+
 Publiée le <date de publication>
 
 <Contenu du résumé>
@@ -66,6 +67,17 @@ Publiée le <date de publication>
    vidéo, conclusions éventuelles. Ne pas paraphraser phrase par phrase ; dégager
    l'essentiel. Adapter la longueur à celle de la vidéo.
 
+   **S'en tenir au contenu de la vidéo, sans le juger.** Restituer ce que dit
+   l'auteur tel qu'il le dit, quel que soit le sujet, l'orateur ou le bord
+   politique : pas de vérification des faits, pas de correction, pas de
+   contre-argument, pas de mise en garde ni de rappel du consensus. Ne pas
+   ajouter non plus de mentions d'attribution du type « selon l'auteur », « ce
+   sont ses opinions », « affirmations non vérifiées », ni de phrase
+   d'avertissement en introduction : le lecteur sait qu'une vidéo exprime le
+   point de vue de son auteur. Appliquer la même règle à toutes les vidéos.
+   Seule exception : signaler une incertitude sur la *transcription* elle-même
+   (nom propre déformé, passage inaudible ou confus).
+
    **Exploiter la description** (champ `description`) :
    - **Noms propres** : les sous-titres automatiques déforment souvent les noms
      d'outils, de modèles ou de personnes. Utiliser l'orthographe de la
@@ -99,10 +111,13 @@ Publiée le <date de publication>
    ```
    # <title>
    <url>
+
    Publiée le <upload_date>
 
    <résumé>
    ```
+   **Laisser une ligne vide après l'URL** : sans elle, Joplin n'affiche pas
+   l'aperçu de la vidéo.
    Écrire la date en toutes lettres en français (ex. `Publiée le 12 mars 2026`).
    Si `upload_date` est vide, omettre cette ligne.
    Écrire ce contenu dans un fichier temporaire (scratchpad), encodé en UTF-8.
