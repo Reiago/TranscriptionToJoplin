@@ -120,6 +120,11 @@ Publiée le <date de publication>
    l'aperçu de la vidéo.
    Écrire la date en toutes lettres en français (ex. `Publiée le 12 mars 2026`).
    Si `upload_date` est vide, omettre cette ligne.
+   **Titre dans une autre langue** : si le titre n'est ni en français ni en
+   anglais (arabe, russe, japonais…), le traduire en français, pour le titre
+   `#` du corps comme pour le `--title` de l'étape 5. Garder le titre original
+   dans une ligne en italique placée après la date
+   (ex. `*Titre original : « … »*`). Les titres en anglais restent tels quels.
    Écrire ce contenu dans un fichier temporaire (scratchpad), encodé en UTF-8.
 
 5. **Créer la note dans Joplin**
